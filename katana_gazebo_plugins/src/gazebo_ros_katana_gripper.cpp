@@ -138,7 +138,7 @@ void GazeboRosKatanaGripper::Load(physics::ModelPtr _parent, sdf::ElementPtr _sd
 void GazeboRosKatanaGripper::InitChild()
 {
   pid_controller_.reset();
-  prev_update_time_ = this->my_world_->GetSimTime();
+  prev_update_time_ = this->my_world_->SimTime();
 }
 
 void GazeboRosKatanaGripper::FiniChild()
@@ -149,7 +149,7 @@ void GazeboRosKatanaGripper::FiniChild()
 void GazeboRosKatanaGripper::UpdateChild()
 {
   // --------------- command joints  ---------------
-  common::Time time_now = this->my_world_->GetSimTime();
+  common::Time time_now = this->my_world_->SimTime();
   common::Time step_time = time_now - prev_update_time_;
   prev_update_time_ = time_now;
   ros::Duration dt = ros::Duration(step_time.Double());
@@ -163,14 +163,14 @@ void GazeboRosKatanaGripper::UpdateChild()
 
   for (size_t i = 0; i < NUM_JOINTS; ++i)
   {
-    // desired_pos = 0.3 * sin(0.25 * this->my_world_->GetSimTime());
+    // desired_pos = 0.3 * sin(0.25 * this->my_world_->SimTime());
     //if ((prev_update_time_.sec / 6) % 2 == 0)
     //  desired_pos[i] = 0.3;
     //else
     //  desired_pos[i] = -0.44;
 
     desired_pos[i] = active_gripper_action_->getNextDesiredPoint(ros::Time::now()).position;
-    actual_pos[i] = joints_[i]->GetAngle(0).Radian();
+    actual_pos[i] = joints_[i]->Position(0);
 
     commanded_effort[i] = pid_controller_.computeCommand(desired_pos[i] - actual_pos[i], -joints_[i]->GetVelocity(0), dt);
 
@@ -194,7 +194,7 @@ void GazeboRosKatanaGripper::UpdateChild()
     // update all actions
     for (std::size_t i = 0; i != gripper_action_list_.size(); i++)
     {
-      gripper_action_list_[i]->setCurrentPoint(joints_[i]->GetAngle(0).Radian(), joints_[i]->GetVelocity(0));
+      gripper_action_list_[i]->setCurrentPoint(joints_[i]->Position(0), joints_[i]->GetVelocity(0));
     }
 
   }
